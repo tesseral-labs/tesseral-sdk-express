@@ -44,7 +44,7 @@ export function requireAuth({
       Object.assign(req, { auth });
       return next();
     } catch {
-      res.status(401);
+      res.sendStatus(401);
       return;
     }
   });

@@ -43,7 +43,7 @@ export class Authenticator {
   }
 
   private async updateConfigData(): Promise<void> {
-    if (!this.jwks || this.jwksNextRefreshUnixSeconds > Date.now() / 1000) {
+    if (this.jwksNextRefreshUnixSeconds < Date.now() / 1000) {
       const { projectId, jwks } = await fetchConfig({
         configApiHostname: this.configApiHostname,
         publishableKey: this.publishableKey,
