@@ -1,17 +1,35 @@
-import * as crypto from "node:crypto";
-import { AccessTokenClaims } from "@tesseral/tesseral-node/api";
 import cookieParser from "cookie-parser";
 import express, { NextFunction, Request, Response, Router } from "express";
 
 import { Authenticator } from "./authenticator";
 import { RequestAuthData } from "./context";
 
+/**
+ * Options for {@link requireAuth}.
+ */
 export interface Options {
   publishableKey: string;
   configApiHostname?: string;
   jwksRefreshIntervalSeconds?: number;
 }
 
+/**
+ * Returns an Express middleware that requires requests be authenticated.
+ *
+ * Unauthenticated requests receive a 401 Unauthorized error.
+ *
+ * Authenticated requests carry authentication data, which you can read using
+ * organizationId(), accessTokenClaims(), or credentials().
+ *
+ * @param publishableKey Your Tesseral Publishable Key. Required.
+ *
+ * @param configApiHostname Optional. The hostname of the Tesseral Config API.
+ * Defaults to "config.tesseral.com".
+ *
+ * @param jwksRefreshIntervalSeconds Optional. requireAuth maintains a cache of
+ * public keys that access tokens may be signed with. This controls how often
+ * that cache is updated. Defaults to 3600 seconds (1 hour).
+ */
 export function requireAuth({
   publishableKey,
   configApiHostname = "config.tesseral.com",

@@ -23,15 +23,40 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
   return req.auth;
 }
 
+/**
+ * The ID of the organization the requester belongs to.
+ *
+ * Throws if the request was not processed through requireAuth().
+ *
+ * @param req An Express Request object.
+ */
 export function organizationId(req: Request): string {
   return extractAuthData("organizationId", req).accessTokenClaims.organization!
     .id!;
 }
 
+/**
+ * Returns the claims inside the request's access token, if any.
+ *
+ * Future versions of this package may add support for other kinds of
+ * authentication than access tokens, in which case this function may throw an
+ * Error.
+ *
+ * Throws if the request was not processed through requireAuth().
+ *
+ * @param req An Express Request object.
+ */
 export function accessTokenClaims(req: Request): AccessTokenClaims {
   return extractAuthData("accessTokenClaims", req).accessTokenClaims;
 }
 
+/**
+ * Returns the request's original credentials.
+ *
+ * Throws if the request was not processed through requireAuth().
+ *
+ * @param req An Express Request object.
+ */
 export function credentials(req: Request): string {
   return extractAuthData("credentials", req).accessToken;
 }
