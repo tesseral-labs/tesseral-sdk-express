@@ -1,8 +1,8 @@
 {
-  "name": "@tesseral/tesseral-node",
-  "version": "0.0.4",
+  "name": "@tesseral/tesseral-express",
+  "version": "0.0.1",
   "private": false,
-  "repository": "https://github.com/tesseral-labs/tesseral-sdk-node",
+  "repository": "https://github.com/tesseral-labs/tesseral-sdk-express",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
