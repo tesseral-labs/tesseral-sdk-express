@@ -1,7 +1,6 @@
 import cookieParser from "cookie-parser";
 import express, { NextFunction, Request, Response, Router } from "express";
-
-import { Authenticator } from "./authenticator";
+import { AccessTokenAuthenticator } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
 
 /**
@@ -35,7 +34,7 @@ export function requireAuth({
   configApiHostname = "config.tesseral.com",
   jwksRefreshIntervalSeconds = 3600,
 }: Options): Router {
-  const authenticator = new Authenticator({
+  const authenticator = new AccessTokenAuthenticator({
     publishableKey,
     configApiHostname,
     jwksRefreshIntervalSeconds,
@@ -46,13 +45,13 @@ export function requireAuth({
   router.use(cookieParser());
 
   router.use(async (req: Request, res: Response, next: NextFunction) => {
-    const accessToken = extractAccessToken(
-      await authenticator.getProjectId(),
-      req,
-    );
+    const projectID = await authenticator.getProjectId();
+    const accessToken = extractAccessToken(projectID, req);
+
     try {
-      const accessTokenClaims =
-        await authenticator.authenticateAccessToken(accessToken);
+      const accessTokenClaims = await authenticator.authenticateAccessToken({
+        accessToken,
+      });
 
       const auth: RequestAuthData = {
         accessToken,
