@@ -2,7 +2,10 @@
   "name": "@tesseral/tesseral-express",
   "version": "0.0.1",
   "private": false,
-  "repository": "https://github.com/tesseral-labs/tesseral-sdk-express",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tesseral-labs/tesseral-sdk-express.git"
+  },
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
