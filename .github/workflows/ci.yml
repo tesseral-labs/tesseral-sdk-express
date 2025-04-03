@@ -14,7 +14,7 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Compile
-        run: npm && npm build
+        run: npm && npm run build
 
   test:
     runs-on: ubuntu-latest
@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Compile
-        run: npm && npm test
+        run: npm && npm run test
 
   publish:
     needs: [compile, test]
