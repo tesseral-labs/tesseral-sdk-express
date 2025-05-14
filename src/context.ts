@@ -60,3 +60,21 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
 export function credentials(req: Request): string {
   return extractAuthData("credentials", req).accessToken;
 }
+
+/**
+ * Returns true if the requester has permission to carry out the given action.
+ * Returns false otherwise.
+ *
+ * Throws if the request was not processed through requireAuth().
+ *
+ * @param req An Express Request object.
+ * @param action An action name, such as "acme.widgets.edit".
+ */
+export function hasPermission(req: Request, action: string): boolean {
+  const claims = extractAuthData("hasPermission", req).accessTokenClaims;
+  if (!claims.actions) {
+    return false;
+  }
+
+  return claims.actions.includes(action);
+}

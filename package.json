@@ -1,6 +1,6 @@
 {
   "name": "@tesseral/tesseral-express",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": false,
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@tesseral/tesseral-node": "^0.0.11",
+    "@tesseral/tesseral-node": "^0.0.13",
     "cookie-parser": "^1.4.7",
     "express": ">=4.0.0 <6.0.0"
   },

@@ -18,7 +18,7 @@ export interface Options {
  * Unauthenticated requests receive a 401 Unauthorized error.
  *
  * Authenticated requests carry authentication data, which you can read using
- * organizationId(), accessTokenClaims(), or credentials().
+ * organizationId(), accessTokenClaims(), credentials(), or hasPermission().
  *
  * @param publishableKey Your Tesseral Publishable Key. Required.
  *
