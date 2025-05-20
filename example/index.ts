@@ -9,7 +9,7 @@ import {
 const app = express();
 app.use(
   requireAuth({
-    publishableKey: "publishable_key_7xykm6byxrltz8hk3gvpjbsv0",
+    publishableKey: "publishable_key_d5s89fdxpxrsbwgi1e6pf5qmz",
     configApiHostname: "config.tesseral.example.com",
   }),
 );
