@@ -2,6 +2,7 @@ import {
   AccessTokenClaims,
   AuthenticateApiKeyResponse,
 } from "@tesseral/tesseral-node/api";
+import { MissingAuthDataError } from "errors";
 import { Request } from "express";
 
 export interface APIKeyDetails extends AuthenticateApiKeyResponse {
@@ -46,7 +47,7 @@ export function organizationId(req: Request): string {
     return authData.accessTokenClaims.organization?.id;
   }
 
-  throw new Error(
+  throw new MissingAuthDataError(
     `Called organizationId() on a request that does not carry auth data.`
   );
 }
@@ -66,7 +67,7 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
   const authData = extractAuthData("accessTokenClaims", req);
 
   if (!authData.accessTokenClaims) {
-    throw new Error(
+    throw new MissingAuthDataError(
       `Called accessTokenClaims() on a request that does not carry an accessToken.`
     );
   }
@@ -90,7 +91,7 @@ export function credentials(req: Request): string {
     return authData.accessToken;
   }
 
-  throw new Error(
+  throw new MissingAuthDataError(
     `Called credentials() on a request that does not carry a valid credential.`
   );
 }

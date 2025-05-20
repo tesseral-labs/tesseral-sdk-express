@@ -6,6 +6,7 @@ import {
 } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
 import { isAPIKeyFormat, isJWTFormat } from "./credentials";
+import { ForbiddenError, UnauthorizedError } from "@tesseral/tesseral-node/api";
 
 /**
  * Options for {@link requireAuth}.
@@ -99,7 +100,14 @@ export function requireAuth({
         Object.assign(req, { auth });
         return next();
       } catch (e) {
-        res.sendStatus(401);
+        if (e instanceof UnauthorizedError) {
+          res.status(401);
+        } else if (e instanceof ForbiddenError) {
+          res.status(403);
+        } else {
+          res.status(500);
+        }
+
         return;
       }
     } else {

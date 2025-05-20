@@ -2,9 +2,16 @@ import { accessTokenClaims, credentials, organizationId } from "../src";
 import { hasPermission } from "../src/context";
 
 describe("context", () => {
-  it("reads out credentials", () => {
+  it("reads out credentials from accessToken", () => {
     const req = { auth: { accessToken: "abc" } };
     expect(credentials(req as any)).toEqual("abc");
+  });
+
+  it("reads out credentials from apiKeyDetails", () => {
+    const req = {
+      auth: { apiKeyDetails: { apiKeySecretToken: "xyz" } },
+    };
+    expect(credentials(req as any)).toEqual("xyz");
   });
 
   it("reads out accessTokenClaims", () => {
