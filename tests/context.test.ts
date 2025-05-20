@@ -16,17 +16,40 @@ describe("context", () => {
     });
   });
 
-  it("reads out organizationId", () => {
+  it("reads out organizationId for accessToken", () => {
     const req = {
       auth: { accessTokenClaims: { organization: { id: "123" } } },
     };
     expect(organizationId(req as any)).toEqual("123");
   });
 
+  it("reads out organizationId for apiKeyDetails", () => {
+    const req = {
+      auth: {
+        apiKeyDetails: { organizationId: "456", actions: ["a.b.c"] },
+      },
+    };
+    expect(organizationId(req as any)).toEqual("456");
+  });
+
   describe("hasPermission", () => {
-    it("returns true if and only if action is present", () => {
+    it("returns true if and only if action is present for accessTokenClaims", () => {
       const req = {
         auth: { accessTokenClaims: { actions: ["a.b.c", "d.e.f"] } },
+      };
+      expect(hasPermission(req as any, "a.b.c")).toBe(true);
+      expect(hasPermission(req as any, "d.e.f")).toBe(true);
+      expect(hasPermission(req as any, "x.y.z")).toBe(false);
+    });
+
+    it("returns true if and only if action is present for apiKeyDetails", () => {
+      const req = {
+        auth: {
+          apiKeyDetails: {
+            actions: ["a.b.c", "d.e.f"],
+            organizationId: "123",
+          },
+        },
       };
       expect(hasPermission(req as any, "a.b.c")).toBe(true);
       expect(hasPermission(req as any, "d.e.f")).toBe(true);

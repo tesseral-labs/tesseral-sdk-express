@@ -1,8 +1,11 @@
 import cookieParser from "cookie-parser";
 import express, { NextFunction, Request, Response, Router } from "express";
-import { AccessTokenAuthenticator } from "@tesseral/tesseral-node";
+import {
+  AccessTokenAuthenticator,
+  TesseralClient,
+} from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
-import { AuthenticateApiKeyResponse } from "@tesseral/tesseral-node/api";
+import { isAPIKeyFormat, isJWTFormat } from "./credentials";
 
 /**
  * Options for {@link requireAuth}.
@@ -11,8 +14,8 @@ export interface Options {
   publishableKey: string;
   configApiHostname?: string;
   jwksRefreshIntervalSeconds?: number;
-  withAPIKeys?: boolean;
-  backendApiKey?: string;
+  apiKeysEnabled?: boolean;
+  tesseralClient?: TesseralClient;
 }
 
 /**
@@ -36,11 +39,11 @@ export function requireAuth({
   publishableKey,
   configApiHostname = "config.tesseral.com",
   jwksRefreshIntervalSeconds = 3600,
-  withAPIKeys = false,
-  backendApiKey,
+  apiKeysEnabled = false,
+  tesseralClient,
 }: Options): Router {
-  if (withAPIKeys && !backendApiKey) {
-    throw new Error("`withAPIKeys` requires a `backendApiKey`.");
+  if (apiKeysEnabled && !tesseralClient) {
+    throw new Error("`apiKeysEnabled` requires a `tesseralClient`.");
   }
 
   const accessTokenAuthenticator = new AccessTokenAuthenticator({
@@ -57,9 +60,7 @@ export function requireAuth({
     const projectID = await accessTokenAuthenticator.getProjectId();
     const accessToken = extractAccessToken(projectID, req);
 
-    if (
-      /^[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/.test(accessToken)
-    ) {
+    if (isJWTFormat(accessToken)) {
       // accessToken is a JWT
       try {
         const accessTokenClaims =
@@ -78,13 +79,16 @@ export function requireAuth({
         res.sendStatus(401);
         return;
       }
-    } else if (/[a-z0-9_]+/.test(accessToken) && withAPIKeys && backendApiKey) {
+    } else if (
+      isAPIKeyFormat(accessToken) &&
+      apiKeysEnabled &&
+      tesseralClient
+    ) {
       // accessToken is presumably an API key
       try {
-        const apiKeyDetails = await authenticateApiKey(
-          backendApiKey,
-          accessToken
-        );
+        const apiKeyDetails = await tesseralClient.apiKeys.authenticateApiKey({
+          secretToken: accessToken,
+        });
 
         const auth: RequestAuthData = {
           apiKeyDetails: {
@@ -119,27 +123,4 @@ function extractAccessToken(projectId: string, req: Request): string {
     return req.cookies[cookieName];
   }
   return "";
-}
-
-async function authenticateApiKey(
-  backendApiKey: string,
-  apiKey: string
-): Promise<AuthenticateApiKeyResponse> {
-  const response = await fetch(
-    "https://api.tesseral.com/v1/api-keys/validate",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${backendApiKey}`,
-      },
-      body: JSON.stringify({ secretToken: apiKey }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to validate API key: ${response.statusText}`);
-  }
-
-  return (await response.json()) as AuthenticateApiKeyResponse;
 }
