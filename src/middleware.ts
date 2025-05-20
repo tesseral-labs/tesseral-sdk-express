@@ -87,7 +87,10 @@ export function requireAuth({
         );
 
         const auth: RequestAuthData = {
-          apiKeyDetails,
+          apiKeyDetails: {
+            ...apiKeyDetails,
+            apiKeySecretToken: accessToken,
+          },
         };
         Object.assign(req, { auth });
         return next();

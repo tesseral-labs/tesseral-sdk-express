@@ -3,10 +3,15 @@ import {
   AuthenticateApiKeyResponse,
 } from "@tesseral/tesseral-node/api";
 import { Request } from "express";
+
+export interface APIKeyDetails extends AuthenticateApiKeyResponse {
+  apiKeySecretToken: string;
+}
+
 export interface RequestAuthData {
   accessToken?: string;
   accessTokenClaims?: AccessTokenClaims;
-  apiKeyDetails?: AuthenticateApiKeyResponse;
+  apiKeyDetails?: APIKeyDetails;
 }
 interface RequestWithAuthData extends Request {
   auth: RequestAuthData;
@@ -42,7 +47,7 @@ export function organizationId(req: Request): string {
   }
 
   throw new Error(
-    `Called organizationId() on a request that does not carry auth data. Did you forget to express.use(requireAuth())?`
+    `Called organizationId() on a request that does not carry auth data.`
   );
 }
 
@@ -62,7 +67,7 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
 
   if (!authData.accessTokenClaims) {
     throw new Error(
-      `Called accessTokenClaims() on a request that does not carry an accessToken. Did you forget to express.use(requireAuth())?`
+      `Called accessTokenClaims() on a request that does not carry an accessToken.`
     );
   }
 
@@ -79,49 +84,13 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
 export function credentials(req: Request): string {
   const authData = extractAuthData("credentials", req);
 
-  if (!authData.accessToken) {
-    throw new Error(
-      `Called credentials() on a request that does not carry an accessToken. Did you forget to express.use(requireAuth())?`
-    );
+  if (authData.apiKeyDetails?.apiKeySecretToken) {
+    return authData.apiKeyDetails.apiKeySecretToken;
+  } else if (authData.accessToken) {
+    return authData.accessToken;
   }
 
-  return authData.accessToken;
-}
-
-/**
- * Returns the request's API key ID.
- *
- * Throws if the request was not processed through requireAuth().
- *
- * @param req An Express Request object.
- */
-export function apiKeyId(req: Request): string {
-  const authData = extractAuthData("apiKeyId", req);
-
-  if (!authData.apiKeyDetails?.apiKeyId) {
-    throw new Error(
-      `Called apiKeyId() on a request that does not carry an API key. Did you forget to express.use(requireAuth())?`
-    );
-  }
-
-  return authData.apiKeyDetails.apiKeyId;
-}
-
-/**
- * Returns the request's API key actions.
- *
- * Throws if the request was not processed through requireAuth().
- *
- * @param req An Express Request object.
- */
-export function actions(req: Request): string[] {
-  const authData = extractAuthData("actions", req);
-
-  if (!authData.apiKeyDetails?.actions) {
-    throw new Error(
-      `Called actions() on a request that does not carry an API key. Did you forget to express.use(requireAuth())?`
-    );
-  }
-
-  return authData.apiKeyDetails.actions;
+  throw new Error(
+    `Called credentials() on a request that does not carry a valid credential.`
+  );
 }
