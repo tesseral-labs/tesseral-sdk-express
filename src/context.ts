@@ -6,7 +6,7 @@ import {
   NoAccessTokenClaimsError,
   NoAuthDataError,
   NoCredentialsError,
-} from "errors";
+} from "./errors";
 import { Request } from "express";
 
 export interface APIKeyDetails extends AuthenticateApiKeyResponse {
