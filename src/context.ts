@@ -106,9 +106,13 @@ export function credentials(req: Request): string {
  */
 export function hasPermission(req: Request, action: string): boolean {
   const claims = extractAuthData("hasPermission", req).accessTokenClaims;
-  if (!claims.actions) {
-    return false;
+  const actions = extractAuthData("hasPermission", req).apiKeyDetails?.actions;
+
+  if (claims?.actions) {
+    return claims.actions.includes(action);
+  } else if (actions) {
+    return actions.includes(action);
   }
 
-  return claims.actions.includes(action);
+  return false;
 }
