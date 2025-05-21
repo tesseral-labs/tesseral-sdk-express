@@ -45,8 +45,15 @@ export function requireAuth({
   configApiHostname = "config.tesseral.com",
   jwksRefreshIntervalSeconds = 3600,
   apiKeysEnabled = false,
+  tesseralClient,
 }: Options): Router {
-  const tesseralClient = new TesseralClient();
+  if (apiKeysEnabled && !tesseralClient && !process.env.TESSERAL_API_KEY) {
+    throw new Error(
+      "API keys are enabled, but no tesseralClient or TESSERAL_API_KEY environment variable was provided. Please provide one of these."
+    );
+  }
+
+  let client = tesseralClient ? tesseralClient : new TesseralClient();
 
   // TODO: come up with a way to ensure the tesseralClient can use the backend API..?
 
@@ -92,7 +99,7 @@ export function requireAuth({
     } else if (isAPIKeyFormat(accessToken) && apiKeysEnabled) {
       // accessToken is presumably an API key
       try {
-        const apiKeyDetails = await tesseralClient.apiKeys.authenticateApiKey({
+        const apiKeyDetails = await client.apiKeys.authenticateApiKey({
           secretToken: accessToken,
         });
         const auth: RequestAuthData = {
