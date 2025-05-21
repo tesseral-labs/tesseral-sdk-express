@@ -78,9 +78,7 @@ export function organizationId(req: Request): string {
 
   // We should never reach this point, because the request should always
   // have either an access token or API key details.
-  throw new UnreachableError(
-    `Called organizationId() on a request that does not carry an organization ID.`
-  );
+  throw new Error(`Unreachable`);
 }
 
 /**
@@ -104,9 +102,9 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
       );
     }
 
-    throw new NoAuthDataError(
-      `Called accessTokenClaims() on a request that does not carry an accessToken.`
-    );
+    // We should never reach this point, because the request should always
+    // have either an access token or API key details.
+    throw new Error(`Unreachable`);
   }
 
   return authData.accessTokenClaims;
@@ -130,9 +128,7 @@ export function credentials(req: Request): string {
 
   // We should never reach this point, because the request should always
   // have either an access token or API key details.
-  throw new UnreachableError(
-    `Called credentials() on a request that does not carry a valid credential.`
-  );
+  throw new Error(`Unreachable`);
 }
 
 /**

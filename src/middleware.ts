@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import express, { NextFunction, Request, Response, Router } from "express";
 import {
   AccessTokenAuthenticator,
+  Tesseral,
   TesseralClient,
 } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
@@ -41,11 +42,8 @@ export function requireAuth({
   configApiHostname = "config.tesseral.com",
   jwksRefreshIntervalSeconds = 3600,
   apiKeysEnabled = false,
-  tesseralClient,
 }: Options): Router {
-  if (apiKeysEnabled && !tesseralClient) {
-    throw new Error("`apiKeysEnabled` requires a `tesseralClient`.");
-  }
+  const tesseralClient = new TesseralClient();
 
   const accessTokenAuthenticator = new AccessTokenAuthenticator({
     publishableKey,
@@ -63,42 +61,29 @@ export function requireAuth({
 
     if (isJWTFormat(accessToken)) {
       // accessToken is a JWT
-      let accessTokenClaims;
       try {
-        accessTokenClaims =
+        const accessTokenClaims =
           await accessTokenAuthenticator.authenticateAccessToken({
             accessToken,
           });
+        const auth: RequestAuthData = {
+          accessToken,
+          accessTokenClaims,
+        };
+
+        Object.assign(req, { auth });
       } catch {
         res.sendStatus(401);
         return;
       }
 
-      const auth: RequestAuthData = {
-        accessToken,
-        accessTokenClaims,
-      };
-
-      Object.assign(req, { auth });
       return next();
-    } else if (
-      isAPIKeyFormat(accessToken) &&
-      apiKeysEnabled &&
-      tesseralClient
-    ) {
+    } else if (isAPIKeyFormat(accessToken) && apiKeysEnabled) {
       // accessToken is presumably an API key
-      let apiKeyDetails;
       try {
-        apiKeyDetails = await tesseralClient.apiKeys.authenticateApiKey({
+        const apiKeyDetails = await tesseralClient.apiKeys.authenticateApiKey({
           secretToken: accessToken,
         });
-      } catch (e) {
-        if (e instanceof UnauthorizedError) {
-          res.status(401);
-        } else {
-          res.status(500);
-        }
-
         const auth: RequestAuthData = {
           apiKeyDetails: {
             ...apiKeyDetails,
@@ -106,6 +91,13 @@ export function requireAuth({
           },
         };
         Object.assign(req, { auth });
+      } catch (e) {
+        if (e instanceof UnauthorizedError) {
+          res.status(401);
+        } else {
+          res.status(500);
+        }
+
         return next();
       }
     } else {
