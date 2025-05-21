@@ -54,7 +54,7 @@ export function requireAuth({
   // otherwise API Key authentication will fail.
   if (apiKeysEnabled && !tesseralClient && !process.env.TESSERAL_API_KEY) {
     throw new Error(
-      "API keys are enabled, but no tesseralClient or TESSERAL_API_KEY environment variable was provided. Please provide one of these."
+      "apiKeysEnabled is `true`, but no `tesseralClient` was provided and the TESSERAL_API_KEY environment variable was found. Please provide one of these."
     );
   }
 
