@@ -1,5 +1,5 @@
 import { accessTokenClaims, credentials, organizationId } from "../src";
-import { AuthType, authType, hasPermission } from "../src/context";
+import { authType, hasPermission } from "../src/context";
 
 describe("context", () => {
   it("reads out credentials from accessToken", () => {
