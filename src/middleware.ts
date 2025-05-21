@@ -2,7 +2,6 @@ import cookieParser from "cookie-parser";
 import express, { NextFunction, Request, Response, Router } from "express";
 import {
   AccessTokenAuthenticator,
-  Tesseral,
   TesseralClient,
 } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
@@ -44,6 +43,8 @@ export function requireAuth({
   apiKeysEnabled = false,
 }: Options): Router {
   const tesseralClient = new TesseralClient();
+
+  // TODO: come up with a way to ensure the tesseralClient can use the backend API..?
 
   const accessTokenAuthenticator = new AccessTokenAuthenticator({
     publishableKey,
