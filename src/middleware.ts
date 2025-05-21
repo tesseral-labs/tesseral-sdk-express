@@ -2,11 +2,15 @@ import cookieParser from "cookie-parser";
 import express, { NextFunction, Request, Response, Router } from "express";
 import {
   AccessTokenAuthenticator,
+  InvalidAccessTokenError,
   TesseralClient,
 } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
 import { isAPIKeyFormat, isJWTFormat } from "./credentials";
-import { UnauthorizedError } from "@tesseral/tesseral-node/api";
+import {
+  BadRequestError,
+  UnauthorizedError,
+} from "@tesseral/tesseral-node/api";
 
 /**
  * Options for {@link requireAuth}.
@@ -75,9 +79,13 @@ export function requireAuth({
         };
 
         Object.assign(req, { auth });
-      } catch {
-        res.sendStatus(401);
-        return;
+      } catch (e) {
+        if (e instanceof InvalidAccessTokenError) {
+          res.sendStatus(401);
+          return;
+        }
+
+        throw e;
       }
 
       return next();
@@ -95,8 +103,12 @@ export function requireAuth({
         };
         Object.assign(req, { auth });
       } catch (e) {
-        if (e instanceof UnauthorizedError) {
-          res.status(401);
+        if (
+          e instanceof BadRequestError &&
+          e.message === "unauthenticated_api_key"
+        ) {
+          res.sendStatus(401);
+          return;
         }
 
         throw e;
