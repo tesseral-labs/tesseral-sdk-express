@@ -21,8 +21,8 @@ export interface AccessTokenDetails {
 }
 
 export interface RequestAuthData {
-  accessTokenDetails?: AccessTokenDetails;
-  apiKeyDetails?: APIKeyDetails;
+  accessToken?: AccessTokenDetails;
+  apiKey?: APIKeyDetails;
 }
 interface RequestWithAuthData extends Request {
   auth: RequestAuthData;
@@ -51,9 +51,9 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
 
 export function authType(req: Request): AuthType {
   const authData = extractAuthData("authType", req);
-  if (authData.accessTokenDetails) {
+  if (authData.accessToken) {
     return AuthType.ACCESS_TOKEN;
-  } else if (authData.apiKeyDetails) {
+  } else if (authData.apiKey) {
     return AuthType.API_KEY;
   }
 
@@ -72,10 +72,10 @@ export function authType(req: Request): AuthType {
 export function organizationId(req: Request): string {
   const authData = extractAuthData("organizationId", req);
 
-  if (authData.apiKeyDetails?.organizationId) {
-    return authData.apiKeyDetails.organizationId;
-  } else if (authData.accessTokenDetails?.accessTokenClaims) {
-    return authData.accessTokenDetails?.accessTokenClaims.organization?.id;
+  if (authData.apiKey?.organizationId) {
+    return authData.apiKey.organizationId;
+  } else if (authData.accessToken?.accessTokenClaims) {
+    return authData.accessToken?.accessTokenClaims.organization?.id;
   }
 
   // We should never reach this point, because the request should always
@@ -97,13 +97,13 @@ export function organizationId(req: Request): string {
 export function accessTokenClaims(req: Request): AccessTokenClaims {
   const authData = extractAuthData("accessTokenClaims", req);
 
-  if (!authData.accessTokenDetails?.accessTokenClaims) {
+  if (!authData.accessToken?.accessTokenClaims) {
     throw new NotAnAccessTokenError(
       `Called accessTokenClaims() on a request that carries an API key, not an access token.`
     );
   }
 
-  return authData.accessTokenDetails?.accessTokenClaims;
+  return authData.accessToken?.accessTokenClaims;
 }
 
 /**
@@ -116,10 +116,10 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
 export function credentials(req: Request): string {
   const authData = extractAuthData("credentials", req);
 
-  if (authData.apiKeyDetails?.apiKeySecretToken) {
-    return authData.apiKeyDetails.apiKeySecretToken;
-  } else if (authData.accessTokenDetails?.accessToken) {
-    return authData.accessTokenDetails?.accessToken;
+  if (authData.apiKey?.apiKeySecretToken) {
+    return authData.apiKey.apiKeySecretToken;
+  } else if (authData.accessToken?.accessToken) {
+    return authData.accessToken?.accessToken;
   }
 
   // We should never reach this point, because the request should always
@@ -139,12 +139,10 @@ export function credentials(req: Request): string {
 export function hasPermission(req: Request, action: string): boolean {
   const authData = extractAuthData("hasPermission", req);
 
-  if (authData?.accessTokenDetails?.accessTokenClaims?.actions) {
-    return authData.accessTokenDetails.accessTokenClaims.actions.includes(
-      action
-    );
-  } else if (authData?.apiKeyDetails?.actions) {
-    return authData.apiKeyDetails.actions.includes(action);
+  if (authData?.accessToken?.accessTokenClaims?.actions) {
+    return authData.accessToken.accessTokenClaims.actions.includes(action);
+  } else if (authData?.apiKey?.actions) {
+    return authData.apiKey.actions.includes(action);
   }
 
   // We should never reach this point, because the request should always

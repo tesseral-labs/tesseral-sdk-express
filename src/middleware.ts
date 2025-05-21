@@ -58,7 +58,7 @@ export function requireAuth({
 
   router.use(async (req: Request, res: Response, next: NextFunction) => {
     const projectID = await accessTokenAuthenticator.getProjectId();
-    const accessToken = extractAccessToken(projectID, req);
+    const accessToken = extractCredential(projectID, req);
 
     if (isJWTFormat(accessToken)) {
       // accessToken is a JWT
@@ -68,7 +68,7 @@ export function requireAuth({
             accessToken,
           });
         const auth: RequestAuthData = {
-          accessTokenDetails: {
+          accessToken: {
             accessToken,
             accessTokenClaims,
           },
@@ -88,7 +88,7 @@ export function requireAuth({
           secretToken: accessToken,
         });
         const auth: RequestAuthData = {
-          apiKeyDetails: {
+          apiKey: {
             ...apiKeyDetails,
             apiKeySecretToken: accessToken,
           },
@@ -112,7 +112,7 @@ export function requireAuth({
 
 const PREFIX_BEARER = "Bearer ";
 
-function extractAccessToken(projectId: string, req: Request): string {
+function extractCredential(projectId: string, req: Request): string {
   if (req.headers.authorization?.startsWith(PREFIX_BEARER)) {
     return req.headers.authorization.substring(PREFIX_BEARER.length);
   }
