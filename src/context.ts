@@ -2,11 +2,7 @@ import {
   AccessTokenClaims,
   AuthenticateApiKeyResponse,
 } from "@tesseral/tesseral-node/api";
-import {
-  NoAuthDataError,
-  NotAnAccessTokenError,
-  UnreachableError,
-} from "./errors";
+import { NotAnAccessTokenError } from "./errors";
 import { Request } from "express";
 
 export enum AuthType {
@@ -19,9 +15,13 @@ export interface APIKeyDetails extends AuthenticateApiKeyResponse {
   apiKeySecretToken: string;
 }
 
-export interface RequestAuthData {
+export interface AccessTokenDetails {
   accessToken?: string;
   accessTokenClaims?: AccessTokenClaims;
+}
+
+export interface RequestAuthData {
+  accessTokenDetails?: AccessTokenDetails;
   apiKeyDetails?: APIKeyDetails;
 }
 interface RequestWithAuthData extends Request {
@@ -51,13 +51,15 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
 
 export function authType(req: Request): AuthType {
   const authData = extractAuthData("authType", req);
-  if (authData.accessToken) {
+  if (authData.accessTokenDetails) {
     return AuthType.ACCESS_TOKEN;
   } else if (authData.apiKeyDetails) {
     return AuthType.API_KEY;
   }
 
-  return AuthType.NONE;
+  // We shoudl never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new Error("Unreachable");
 }
 
 /**
@@ -72,8 +74,8 @@ export function organizationId(req: Request): string {
 
   if (authData.apiKeyDetails?.organizationId) {
     return authData.apiKeyDetails.organizationId;
-  } else if (authData.accessTokenClaims) {
-    return authData.accessTokenClaims.organization?.id;
+  } else if (authData.accessTokenDetails?.accessTokenClaims) {
+    return authData.accessTokenDetails?.accessTokenClaims.organization?.id;
   }
 
   // We should never reach this point, because the request should always
@@ -95,19 +97,13 @@ export function organizationId(req: Request): string {
 export function accessTokenClaims(req: Request): AccessTokenClaims {
   const authData = extractAuthData("accessTokenClaims", req);
 
-  if (!authData.accessTokenClaims) {
-    if (authData.apiKeyDetails) {
-      throw new NotAnAccessTokenError(
-        `Called accessTokenClaims() on a request that carries an API key, not an access token.`
-      );
-    }
-
-    // We should never reach this point, because the request should always
-    // have either an access token or API key details.
-    throw new Error(`Unreachable`);
+  if (!authData.accessTokenDetails?.accessTokenClaims) {
+    throw new NotAnAccessTokenError(
+      `Called accessTokenClaims() on a request that carries an API key, not an access token.`
+    );
   }
 
-  return authData.accessTokenClaims;
+  return authData.accessTokenDetails?.accessTokenClaims;
 }
 
 /**
@@ -122,8 +118,8 @@ export function credentials(req: Request): string {
 
   if (authData.apiKeyDetails?.apiKeySecretToken) {
     return authData.apiKeyDetails.apiKeySecretToken;
-  } else if (authData.accessToken) {
-    return authData.accessToken;
+  } else if (authData.accessTokenDetails?.accessToken) {
+    return authData.accessTokenDetails?.accessToken;
   }
 
   // We should never reach this point, because the request should always
@@ -141,14 +137,17 @@ export function credentials(req: Request): string {
  * @param action An action name, such as "acme.widgets.edit".
  */
 export function hasPermission(req: Request, action: string): boolean {
-  const claims = extractAuthData("hasPermission", req).accessTokenClaims;
-  const actions = extractAuthData("hasPermission", req).apiKeyDetails?.actions;
+  const authData = extractAuthData("hasPermission", req);
 
-  if (claims?.actions) {
-    return claims.actions.includes(action);
-  } else if (actions) {
-    return actions.includes(action);
+  if (authData?.accessTokenDetails?.accessTokenClaims?.actions) {
+    return authData.accessTokenDetails.accessTokenClaims.actions.includes(
+      action
+    );
+  } else if (authData?.apiKeyDetails?.actions) {
+    return authData.apiKeyDetails.actions.includes(action);
   }
 
-  return false;
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new Error(`Unreachable`);
 }

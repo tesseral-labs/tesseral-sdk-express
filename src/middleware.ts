@@ -68,8 +68,10 @@ export function requireAuth({
             accessToken,
           });
         const auth: RequestAuthData = {
-          accessToken,
-          accessTokenClaims,
+          accessTokenDetails: {
+            accessToken,
+            accessTokenClaims,
+          },
         };
 
         Object.assign(req, { auth });
@@ -95,11 +97,9 @@ export function requireAuth({
       } catch (e) {
         if (e instanceof UnauthorizedError) {
           res.status(401);
-        } else {
-          res.status(500);
         }
 
-        return next();
+        throw e;
       }
     } else {
       res.sendStatus(401);
