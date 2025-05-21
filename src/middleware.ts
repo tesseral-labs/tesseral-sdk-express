@@ -6,7 +6,7 @@ import {
 } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
 import { isAPIKeyFormat, isJWTFormat } from "./credentials";
-import { ForbiddenError, UnauthorizedError } from "@tesseral/tesseral-node/api";
+import { UnauthorizedError } from "@tesseral/tesseral-node/api";
 
 /**
  * Options for {@link requireAuth}.
@@ -63,33 +63,41 @@ export function requireAuth({
 
     if (isJWTFormat(accessToken)) {
       // accessToken is a JWT
+      let accessTokenClaims;
       try {
-        const accessTokenClaims =
+        accessTokenClaims =
           await accessTokenAuthenticator.authenticateAccessToken({
             accessToken,
           });
-
-        const auth: RequestAuthData = {
-          accessToken,
-          accessTokenClaims,
-        };
-
-        Object.assign(req, { auth });
-        return next();
       } catch {
         res.sendStatus(401);
         return;
       }
+
+      const auth: RequestAuthData = {
+        accessToken,
+        accessTokenClaims,
+      };
+
+      Object.assign(req, { auth });
+      return next();
     } else if (
       isAPIKeyFormat(accessToken) &&
       apiKeysEnabled &&
       tesseralClient
     ) {
       // accessToken is presumably an API key
+      let apiKeyDetails;
       try {
-        const apiKeyDetails = await tesseralClient.apiKeys.authenticateApiKey({
+        apiKeyDetails = await tesseralClient.apiKeys.authenticateApiKey({
           secretToken: accessToken,
         });
+      } catch (e) {
+        if (e instanceof UnauthorizedError) {
+          res.status(401);
+        } else {
+          res.status(500);
+        }
 
         const auth: RequestAuthData = {
           apiKeyDetails: {
@@ -99,16 +107,6 @@ export function requireAuth({
         };
         Object.assign(req, { auth });
         return next();
-      } catch (e) {
-        if (e instanceof UnauthorizedError) {
-          res.status(401);
-        } else if (e instanceof ForbiddenError) {
-          res.status(403);
-        } else {
-          res.status(500);
-        }
-
-        return;
       }
     } else {
       res.sendStatus(401);
