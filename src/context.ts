@@ -3,15 +3,16 @@ import {
   AuthenticateApiKeyResponse,
 } from "@tesseral/tesseral-node/api";
 import {
-  NoAccessTokenClaimsError,
   NoAuthDataError,
-  NoCredentialsError,
+  NotAnAccessTokenError,
+  UnreachableError,
 } from "./errors";
 import { Request } from "express";
 
 export enum AuthType {
   ACCESS_TOKEN = "accessToken",
   API_KEY = "apiKey",
+  NONE = "none",
 }
 
 export interface APIKeyDetails extends AuthenticateApiKeyResponse {
@@ -43,9 +44,7 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
 /**
  * The type of authentication used in the request.
  *
- * This is either "accessToken" or "apiKey".
- *
- * Throws if the request was not processed through requireAuth().
+ * This is either "accessToken", "apiKey", or "none".
  *
  * @param req An Express Request object.
  */
@@ -58,9 +57,7 @@ export function authType(req: Request): AuthType {
     return AuthType.API_KEY;
   }
 
-  throw new NoAuthDataError(
-    `Called authType() on a request that does not carry auth data.`
-  );
+  return AuthType.NONE;
 }
 
 /**
@@ -79,8 +76,10 @@ export function organizationId(req: Request): string {
     return authData.accessTokenClaims.organization?.id;
   }
 
-  throw new NoAuthDataError(
-    `Called organizationId() on a request that does not carry auth data.`
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new UnreachableError(
+    `Called organizationId() on a request that does not carry an organization ID.`
   );
 }
 
@@ -99,7 +98,13 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
   const authData = extractAuthData("accessTokenClaims", req);
 
   if (!authData.accessTokenClaims) {
-    throw new NoAccessTokenClaimsError(
+    if (authData.apiKeyDetails) {
+      throw new NotAnAccessTokenError(
+        `Called accessTokenClaims() on a request that carries an API key, not an access token.`
+      );
+    }
+
+    throw new NoAuthDataError(
       `Called accessTokenClaims() on a request that does not carry an accessToken.`
     );
   }
@@ -123,7 +128,9 @@ export function credentials(req: Request): string {
     return authData.accessToken;
   }
 
-  throw new NoCredentialsError(
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new UnreachableError(
     `Called credentials() on a request that does not carry a valid credential.`
   );
 }

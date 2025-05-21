@@ -1,7 +1,7 @@
-export class NoAuthDataError extends Error {
+export class NotAnAccessTokenError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "NoAuthDataError";
+    this.name = "NotAnAccessTokenError";
   }
 }
 
@@ -12,9 +12,16 @@ export class NoAccessTokenClaimsError extends Error {
   }
 }
 
-export class NoCredentialsError extends Error {
+export class NoAuthDataError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "NoCredentialsError";
+    this.name = "NoAuthDataError";
+  }
+}
+
+export class UnreachableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnreachableError";
   }
 }

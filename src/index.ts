@@ -1,7 +1,7 @@
 export {
   NoAccessTokenClaimsError,
   NoAuthDataError,
-  NoCredentialsError,
+  NotAnAccessTokenError,
 } from "./errors";
 export { requireAuth, Options } from "./middleware";
 export {
