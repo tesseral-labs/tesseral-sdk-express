@@ -1,5 +1,5 @@
 import { accessTokenClaims, credentials, organizationId } from "../src";
-import { hasPermission } from "../src/context";
+import { AuthType, authType, hasPermission } from "../src/context";
 
 describe("context", () => {
   it("reads out credentials from accessToken", () => {
@@ -37,6 +37,22 @@ describe("context", () => {
       },
     };
     expect(organizationId(req as any)).toEqual("456");
+  });
+
+  it("reads out authType for accessToken", () => {
+    const req = {
+      auth: { accessToken: "abc.efg.hij" },
+    };
+    expect(authType(req as any)).toEqual(AuthType.ACCESS_TOKEN);
+  });
+
+  it("reads out authType for apiKeyDetails", () => {
+    const req = {
+      auth: {
+        apiKeyDetails: { organizationId: "456", actions: ["a.b.c"] },
+      },
+    };
+    expect(authType(req as any)).toEqual(AuthType.API_KEY);
   });
 
   describe("hasPermission", () => {

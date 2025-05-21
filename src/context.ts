@@ -9,6 +9,11 @@ import {
 } from "./errors";
 import { Request } from "express";
 
+export enum AuthType {
+  ACCESS_TOKEN = "accessToken",
+  API_KEY = "apiKey",
+}
+
 export interface APIKeyDetails extends AuthenticateApiKeyResponse {
   apiKeySecretToken: string;
 }
@@ -33,6 +38,29 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
     );
   }
   return req.auth;
+}
+
+/**
+ * The type of authentication used in the request.
+ *
+ * This is either "accessToken" or "apiKey".
+ *
+ * Throws if the request was not processed through requireAuth().
+ *
+ * @param req An Express Request object.
+ */
+
+export function authType(req: Request): AuthType {
+  const authData = extractAuthData("authType", req);
+  if (authData.accessToken) {
+    return AuthType.ACCESS_TOKEN;
+  } else if (authData.apiKeyDetails) {
+    return AuthType.API_KEY;
+  }
+
+  throw new NoAuthDataError(
+    `Called authType() on a request that does not carry auth data.`
+  );
 }
 
 /**
