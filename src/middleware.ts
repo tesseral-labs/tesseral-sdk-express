@@ -74,18 +74,18 @@ export function requireAuth({
 
   router.use(async (req: Request, res: Response, next: NextFunction) => {
     const projectID = await accessTokenAuthenticator.getProjectId();
-    const accessToken = extractCredential(projectID, req);
+    const credential = extractCredential(projectID, req);
 
-    if (isJWTFormat(accessToken)) {
+    if (isJWTFormat(credential)) {
       // accessToken is a JWT
       try {
         const accessTokenClaims =
           await accessTokenAuthenticator.authenticateAccessToken({
-            accessToken,
+            accessToken: credential,
           });
         const auth: RequestAuthData = {
           accessToken: {
-            accessToken,
+            accessToken: credential,
             accessTokenClaims,
           },
         };
@@ -101,16 +101,16 @@ export function requireAuth({
       }
 
       return next();
-    } else if (isAPIKeyFormat(accessToken) && apiKeysEnabled) {
+    } else if (isAPIKeyFormat(credential) && apiKeysEnabled) {
       // accessToken is presumably an API key
       try {
         const apiKeyDetails = await client.apiKeys.authenticateApiKey({
-          secretToken: accessToken,
+          secretToken: credential,
         });
         const auth: RequestAuthData = {
           apiKey: {
             ...apiKeyDetails,
-            apiKeySecretToken: accessToken,
+            apiKeySecretToken: credential,
           },
         };
         Object.assign(req, { auth });
