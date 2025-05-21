@@ -5,11 +5,7 @@ import {
 import { NotAnAccessTokenError } from "./errors";
 import { Request } from "express";
 
-export enum AuthType {
-  ACCESS_TOKEN = "accessToken",
-  API_KEY = "apiKey",
-  NONE = "none",
-}
+export type AuthType = "access_token" | "api_key";
 
 export interface APIKeyDetails extends AuthenticateApiKeyResponse {
   apiKeySecretToken: string;
@@ -52,9 +48,9 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
 export function authType(req: Request): AuthType {
   const authData = extractAuthData("authType", req);
   if (authData.accessToken) {
-    return AuthType.ACCESS_TOKEN;
+    return "access_token";
   } else if (authData.apiKey) {
-    return AuthType.API_KEY;
+    return "api_key";
   }
 
   // We shoudl never reach this point, because the request should always
@@ -139,10 +135,12 @@ export function credentials(req: Request): string {
 export function hasPermission(req: Request, action: string): boolean {
   const authData = extractAuthData("hasPermission", req);
 
-  if (authData?.accessToken?.accessTokenClaims?.actions) {
-    return authData.accessToken.accessTokenClaims.actions.includes(action);
-  } else if (authData?.apiKey?.actions) {
-    return authData.apiKey.actions.includes(action);
+  if (authData?.accessToken?.accessTokenClaims) {
+    return (
+      authData.accessToken.accessTokenClaims.actions?.includes(action) || false
+    );
+  } else if (authData?.apiKey) {
+    return authData.apiKey.actions?.includes(action) || false;
   }
 
   // We should never reach this point, because the request should always
