@@ -48,19 +48,21 @@ export function requireAuth({
   tesseralClient,
 }: Options): Router {
   // If apiKeysEnabled is true, tesseralClient must be provided or
-  // TESSERAL_API_KEY must be set in the environment.
+  // TESSERAL_BACKEND_API_KEY must be set in the environment.
   //
   // If tesseralClient is provided, it must be able to use the backend API,
   // otherwise API Key authentication will fail.
-  if (apiKeysEnabled && !tesseralClient && !process.env.TESSERAL_API_KEY) {
+  if (
+    apiKeysEnabled &&
+    !tesseralClient &&
+    !process.env.TESSERAL_BACKEND_API_KEY
+  ) {
     throw new Error(
-      "apiKeysEnabled is `true`, but no `tesseralClient` was provided and the TESSERAL_API_KEY environment variable was found. Please provide one of these."
+      "If you set apiKeysEnabled to true, then you must either provide a tesseralClient or you must set a TESSERAL_BACKEND_API_KEY environment variable."
     );
   }
 
-  let client = tesseralClient ? tesseralClient : new TesseralClient();
-
-  // TODO: come up with a way to ensure the tesseralClient can use the backend API..?
+  let client = tesseralClient || new TesseralClient();
 
   const accessTokenAuthenticator = new AccessTokenAuthenticator({
     publishableKey,

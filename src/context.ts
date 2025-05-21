@@ -5,8 +5,6 @@ import {
 import { NotAnAccessTokenError } from "./errors";
 import { Request } from "express";
 
-export type AuthType = "access_token" | "api_key";
-
 export interface APIKeyDetails extends AuthenticateApiKeyResponse {
   apiKeySecretToken: string;
 }
@@ -45,7 +43,7 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
  * @param req An Express Request object.
  */
 
-export function authType(req: Request): AuthType {
+export function authType(req: Request): "access_token" | "api_key" {
   const authData = extractAuthData("authType", req);
   if (authData.accessToken) {
     return "access_token";
@@ -53,7 +51,7 @@ export function authType(req: Request): AuthType {
     return "api_key";
   }
 
-  // We shoudl never reach this point, because the request should always
+  // We should never reach this point, because the request should always
   // have either an access token or API key details.
   throw new Error("Unreachable");
 }
