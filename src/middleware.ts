@@ -7,10 +7,7 @@ import {
 } from "@tesseral/tesseral-node";
 import { RequestAuthData } from "./context";
 import { isAPIKeyFormat, isJWTFormat } from "./credentials";
-import {
-  BadRequestError,
-  UnauthorizedError,
-} from "@tesseral/tesseral-node/api";
+import { BadRequestError } from "@tesseral/tesseral-node/api";
 
 /**
  * Options for {@link requireAuth}.
