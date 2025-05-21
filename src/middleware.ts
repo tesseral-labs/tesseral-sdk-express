@@ -47,6 +47,11 @@ export function requireAuth({
   apiKeysEnabled = false,
   tesseralClient,
 }: Options): Router {
+  // If apiKeysEnabled is true, tesseralClient must be provided or
+  // TESSERAL_API_KEY must be set in the environment.
+  //
+  // If tesseralClient is provided, it must be able to use the backend API,
+  // otherwise API Key authentication will fail.
   if (apiKeysEnabled && !tesseralClient && !process.env.TESSERAL_API_KEY) {
     throw new Error(
       "API keys are enabled, but no tesseralClient or TESSERAL_API_KEY environment variable was provided. Please provide one of these."
