@@ -43,7 +43,7 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
  * @param req An Express Request object.
  */
 
-export function authType(req: Request): "access_token" | "api_key" {
+export function credentialType(req: Request): "access_token" | "api_key" {
   const authData = extractAuthData("authType", req);
   if (authData.accessToken) {
     return "access_token";
