@@ -5,19 +5,33 @@ import {
   organizationId,
   requireAuth,
 } from "../src";
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({
+  path: path.resolve(__dirname + "/.env"),
+});
 
 const app = express();
 app.use(
   requireAuth({
-    publishableKey: "publishable_key_7xykm6byxrltz8hk3gvpjbsv0",
-    configApiHostname: "config.tesseral.example.com",
-  }),
+    apiKeysEnabled: true,
+    publishableKey: process.env.TESSERAL_PUBLISHABLE_KEY || "",
+    configApiHostname: "config.tesseral.com",
+  })
 );
 
 app.get("/", (req, res) => {
   res.json({
     organizationId: organizationId(req),
     accessTokenClaims: accessTokenClaims(req),
+    credentials: credentials(req),
+  });
+});
+
+app.post("/", (req, res) => {
+  res.json({
+    organizationId: organizationId(req),
     credentials: credentials(req),
   });
 });

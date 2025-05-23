@@ -1,11 +1,23 @@
-import { AccessTokenClaims } from "@tesseral/tesseral-node/api";
+import {
+  AccessTokenClaims,
+  AuthenticateApiKeyResponse,
+} from "@tesseral/tesseral-node/api";
+import { NotAnAccessTokenError } from "./errors";
 import { Request } from "express";
 
-export interface RequestAuthData {
-  accessToken: string;
-  accessTokenClaims: AccessTokenClaims;
+export interface APIKeyDetails extends AuthenticateApiKeyResponse {
+  apiKeySecretToken: string;
 }
 
+export interface AccessTokenDetails {
+  accessToken?: string;
+  accessTokenClaims?: AccessTokenClaims;
+}
+
+export interface RequestAuthData {
+  accessToken?: AccessTokenDetails;
+  apiKey?: APIKeyDetails;
+}
 interface RequestWithAuthData extends Request {
   auth: RequestAuthData;
 }
@@ -17,10 +29,31 @@ function hasAuthData(req: Request): req is RequestWithAuthData {
 function extractAuthData(name: string, req: Request): RequestAuthData {
   if (!hasAuthData(req)) {
     throw new Error(
-      `Called ${name}() on a request that does not carry auth data. Did you forget to express.use(requireAuth())?`,
+      `Called ${name}() on a request that does not carry auth data. Did you forget to express.use(requireAuth())?`
     );
   }
   return req.auth;
+}
+
+/**
+ * The type of authentication used in the request.
+ *
+ * This is either "accessToken", "apiKey", or "none".
+ *
+ * @param req An Express Request object.
+ */
+
+export function credentialsType(req: Request): "access_token" | "api_key" {
+  const authData = extractAuthData("authType", req);
+  if (authData.accessToken) {
+    return "access_token";
+  } else if (authData.apiKey) {
+    return "api_key";
+  }
+
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new Error("Unreachable");
 }
 
 /**
@@ -31,8 +64,17 @@ function extractAuthData(name: string, req: Request): RequestAuthData {
  * @param req An Express Request object.
  */
 export function organizationId(req: Request): string {
-  return extractAuthData("organizationId", req).accessTokenClaims.organization!
-    .id!;
+  const authData = extractAuthData("organizationId", req);
+
+  if (authData.apiKey?.organizationId) {
+    return authData.apiKey.organizationId;
+  } else if (authData.accessToken?.accessTokenClaims) {
+    return authData.accessToken?.accessTokenClaims.organization?.id;
+  }
+
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new Error(`Unreachable`);
 }
 
 /**
@@ -47,7 +89,15 @@ export function organizationId(req: Request): string {
  * @param req An Express Request object.
  */
 export function accessTokenClaims(req: Request): AccessTokenClaims {
-  return extractAuthData("accessTokenClaims", req).accessTokenClaims;
+  const authData = extractAuthData("accessTokenClaims", req);
+
+  if (!authData.accessToken?.accessTokenClaims) {
+    throw new NotAnAccessTokenError(
+      `Called accessTokenClaims() on a request that carries an API key, not an access token.`
+    );
+  }
+
+  return authData.accessToken?.accessTokenClaims;
 }
 
 /**
@@ -58,5 +108,40 @@ export function accessTokenClaims(req: Request): AccessTokenClaims {
  * @param req An Express Request object.
  */
 export function credentials(req: Request): string {
-  return extractAuthData("credentials", req).accessToken;
+  const authData = extractAuthData("credentials", req);
+
+  if (authData.apiKey?.apiKeySecretToken) {
+    return authData.apiKey.apiKeySecretToken;
+  } else if (authData.accessToken?.accessToken) {
+    return authData.accessToken?.accessToken;
+  }
+
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new Error(`Unreachable`);
+}
+
+/**
+ * Returns true if the requester has permission to carry out the given action.
+ * Returns false otherwise.
+ *
+ * Throws if the request was not processed through requireAuth().
+ *
+ * @param req An Express Request object.
+ * @param action An action name, such as "acme.widgets.edit".
+ */
+export function hasPermission(req: Request, action: string): boolean {
+  const authData = extractAuthData("hasPermission", req);
+
+  if (authData?.accessToken?.accessTokenClaims) {
+    return (
+      authData.accessToken.accessTokenClaims.actions?.includes(action) || false
+    );
+  } else if (authData?.apiKey) {
+    return authData.apiKey.actions?.includes(action) || false;
+  }
+
+  // We should never reach this point, because the request should always
+  // have either an access token or API key details.
+  throw new Error(`Unreachable`);
 }
