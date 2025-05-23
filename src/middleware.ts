@@ -124,6 +124,7 @@ export function requireAuth({
 
         throw e;
       }
+      return next();
     } else {
       res.sendStatus(401);
       return;
